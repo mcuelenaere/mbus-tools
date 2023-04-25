@@ -1,9 +1,12 @@
-use nom::{IResult, Err, branch::alt, bytes::streaming::{
-    tag,
-    take,
-}, combinator::{cut, map_res}, sequence::{tuple, Tuple}, Parser};
-use crate::{Frame, FRAME_END, LONG_START, SHORT_START, SINGLE_CHAR};
 use crate::utils::calculate_checksum;
+use crate::{Frame, FRAME_END, LONG_START, SHORT_START, SINGLE_CHAR};
+use nom::{
+    branch::alt,
+    bytes::streaming::{tag, take},
+    combinator::{cut, map_res},
+    sequence::{tuple, Tuple},
+    Err, IResult, Parser,
+};
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum FrameParseErrorKind {
@@ -20,10 +23,7 @@ pub struct FrameParseError<'a> {
 
 impl<'a> FrameParseError<'a> {
     pub fn new(input: &'a [u8], kind: FrameParseErrorKind) -> Self {
-        Self {
-            input,
-            kind,
-        }
+        Self { input, kind }
     }
 }
 
@@ -55,13 +55,18 @@ fn tag_frame_end(i: &[u8]) -> IResult<&[u8], &[u8], FrameParseError> {
     tag(&[FRAME_END])(i)
 }
 
-fn checksummed_buf<'a>(n: usize) -> impl FnMut(&'a [u8]) -> IResult<&'a [u8], &'a [u8], FrameParseError<'a>> {
+fn checksummed_buf<'a>(
+    n: usize,
+) -> impl FnMut(&'a [u8]) -> IResult<&'a [u8], &'a [u8], FrameParseError<'a>> {
     cut(map_res(take(n), |i: &[u8]| {
         let l = i.len();
-        if calculate_checksum(&i[0..l-1]) != i[l-1] {
-            Err(FrameParseError::new(i, FrameParseErrorKind::MalformedChecksum))
+        if calculate_checksum(&i[0..l - 1]) != i[l - 1] {
+            Err(FrameParseError::new(
+                i,
+                FrameParseErrorKind::MalformedChecksum,
+            ))
         } else {
-            Ok(&i[0..l-1])
+            Ok(&i[0..l - 1])
         }
     }))
 }
@@ -69,7 +74,10 @@ fn checksummed_buf<'a>(n: usize) -> impl FnMut(&'a [u8]) -> IResult<&'a [u8], &'
 fn length_value(i: &[u8]) -> IResult<&[u8], usize, FrameParseError> {
     cut(map_res(take(2usize), |i: &[u8]| {
         if i[0] != i[1] {
-            Err(FrameParseError::new(i, FrameParseErrorKind::InconsistentLengthValues))
+            Err(FrameParseError::new(
+                i,
+                FrameParseErrorKind::InconsistentLengthValues,
+            ))
         } else {
             Ok(i[0] as usize)
         }
@@ -77,9 +85,7 @@ fn length_value(i: &[u8]) -> IResult<&[u8], usize, FrameParseError> {
 }
 
 fn single(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
-    tag(&[SINGLE_CHAR])
-        .map(|_| Frame::Single)
-        .parse(i)
+    tag(&[SINGLE_CHAR]).map(|_| Frame::Single).parse(i)
 }
 
 fn short_frame(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
@@ -96,7 +102,10 @@ fn long_frame(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
     let (i, (_, buf, _)) = (tag_long_start, checksummed_buf(length + 1), tag_frame_end).parse(i)?;
 
     if length < 3 {
-        return Err(Err::Failure(FrameParseError::new(i, FrameParseErrorKind::InconsistentLengthValues)));
+        return Err(Err::Failure(FrameParseError::new(
+            i,
+            FrameParseErrorKind::InconsistentLengthValues,
+        )));
     }
 
     let frame = if length == 3 {
@@ -128,13 +137,13 @@ mod tests {
 
     #[test]
     fn test_parse_frame() -> Result<(), Box<dyn std::error::Error>> {
-        assert_eq!(
-            Frame::from_bytes(b"\xe5")?,
-            Frame::Single,
-        );
+        assert_eq!(Frame::from_bytes(b"\xe5")?, Frame::Single,);
         assert_eq!(
             Frame::from_bytes(b"\x10\x7b\x49\xc4\x16")?,
-            Frame::Short { address: 0x49, control: 0x7B }
+            Frame::Short {
+                address: 0x49,
+                control: 0x7B
+            }
         );
         assert_eq!(
             Frame::from_bytes(b"\x68\x03\x03\x68\x53\xFE\xBD\x0E\x16")?,
@@ -157,11 +166,17 @@ mod tests {
         // faulty frames
         assert!(matches!(
             Frame::from_bytes(b"\x10\x7b\x49\xc5\x16"),
-            Err(Err::Failure(FrameParseError { kind: FrameParseErrorKind::MalformedChecksum, .. }))
+            Err(Err::Failure(FrameParseError {
+                kind: FrameParseErrorKind::MalformedChecksum,
+                ..
+            }))
         ));
         assert!(matches!(
             Frame::from_bytes(b"\x68\x03\x02\x68\x53\xFE\xBD\x0E\x16"),
-            Err(Err::Failure(FrameParseError { kind: FrameParseErrorKind::InconsistentLengthValues, .. }))
+            Err(Err::Failure(FrameParseError {
+                kind: FrameParseErrorKind::InconsistentLengthValues,
+                ..
+            }))
         ));
 
         Ok(())

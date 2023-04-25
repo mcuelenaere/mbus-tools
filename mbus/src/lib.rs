@@ -37,7 +37,6 @@ impl<'a> Frame<'a> {
         self.iter_bytes().collect::<Vec<u8>>()
     }
 }
-
 impl<'a> TryFrom<&'a [u8]> for Frame<'a> {
     type Error = parser::ParseError<'a>;
 
