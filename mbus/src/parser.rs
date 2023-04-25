@@ -84,11 +84,11 @@ fn length_value(i: &[u8]) -> IResult<&[u8], usize, FrameParseError> {
     }))(i)
 }
 
-fn single(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
+fn single(i: &[u8]) -> IResult<&[u8], Frame, FrameParseError> {
     tag(&[SINGLE_CHAR]).map(|_| Frame::Single).parse(i)
 }
 
-fn short_frame(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
+fn short_frame(i: &[u8]) -> IResult<&[u8], Frame, FrameParseError> {
     tuple((tag_short_start, checksummed_buf(3), tag_frame_end))
         .map(|(_, i, _)| Frame::Short {
             control: i[0],
@@ -97,7 +97,7 @@ fn short_frame(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
         .parse(i)
 }
 
-fn long_frame(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
+fn long_frame(i: &[u8]) -> IResult<&[u8], Frame, FrameParseError> {
     let (i, (_, length)) = (tag_long_start, length_value).parse(i)?;
     let (i, (_, buf, _)) = (tag_long_start, checksummed_buf(length + 1), tag_frame_end).parse(i)?;
 
@@ -119,7 +119,7 @@ fn long_frame(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
             control: buf[0],
             address: buf[1],
             control_information: buf[2],
-            data: &buf[3..],
+            data: Vec::from(&buf[3..]),
         }
     };
 
@@ -127,7 +127,7 @@ fn long_frame(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
 }
 
 pub type ParseError<'a> = Err<FrameParseError<'a>>;
-pub fn parse_frame(i: &[u8]) -> IResult<&[u8], Frame<'_>, FrameParseError> {
+pub fn parse_frame(i: &[u8]) -> IResult<&[u8], Frame, FrameParseError> {
     alt((single, short_frame, long_frame))(i)
 }
 
@@ -159,7 +159,7 @@ mod tests {
                 address: 0xFE,
                 control: 0x53,
                 control_information: 0x51,
-                data: b"\x01\x7A\x08"
+                data: (*b"\x01\x7A\x08").into()
             }
         );
 

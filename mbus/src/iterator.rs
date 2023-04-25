@@ -2,7 +2,7 @@ use crate::utils::calculate_checksum;
 use crate::*;
 
 pub struct FrameIterator<'a> {
-    frame: &'a Frame<'a>,
+    frame: &'a Frame,
     index: usize,
 }
 
@@ -121,7 +121,7 @@ mod tests {
                 address: 0xFE,
                 control: 0x53,
                 control_information: 0x51,
-                data: b"\x01\x7A\x08"
+                data: (*b"\x01\x7A\x08").into()
             }
             .to_bytes(),
             b"\x68\x06\x06\x68\x53\xFE\x51\x01\x7A\x08\x25\x16",

@@ -4,7 +4,7 @@ const LONG_START: u8 = 0x68;
 const FRAME_END: u8 = 0x16;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Frame<'a> {
+pub enum Frame {
     Single,
     Short {
         control: u8,
@@ -19,17 +19,17 @@ pub enum Frame<'a> {
         control: u8,
         address: u8,
         control_information: u8,
-        data: &'a [u8],
+        data: Vec<u8>,
     },
 }
 
-impl<'a> Frame<'a> {
-    pub fn from_bytes(bytes: &'a [u8]) -> Result<Self, parser::ParseError<'a>> {
+impl Frame {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, parser::ParseError<'_>> {
         let (_, frame) = parser::parse_frame(bytes)?;
         Ok(frame)
     }
 
-    pub fn iter_bytes(&'a self) -> iterator::FrameIterator<'a> {
+    pub fn iter_bytes(&self) -> iterator::FrameIterator<'_> {
         iterator::FrameIterator::new(&self)
     }
 
@@ -40,7 +40,7 @@ impl<'a> Frame<'a> {
 
 pub type ParseError<'a> = parser::ParseError<'a>;
 
-impl<'a> TryFrom<&'a [u8]> for Frame<'a> {
+impl<'a> TryFrom<&'a [u8]> for Frame {
     type Error = ParseError<'a>;
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
