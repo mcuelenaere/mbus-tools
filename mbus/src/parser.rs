@@ -9,27 +9,15 @@ use nom::{
 };
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum FrameParseErrorKind {
+pub enum FrameParseError {
     MalformedChecksum,
     InconsistentLengthValues,
     Nom(nom::error::ErrorKind),
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub struct FrameParseError<'a> {
-    pub input: &'a [u8],
-    pub kind: FrameParseErrorKind,
-}
-
-impl<'a> FrameParseError<'a> {
-    pub fn new(input: &'a [u8], kind: FrameParseErrorKind) -> Self {
-        Self { input, kind }
-    }
-}
-
-impl<'a> nom::error::ParseError<&'a [u8]> for FrameParseError<'a> {
-    fn from_error_kind(input: &'a [u8], kind: nom::error::ErrorKind) -> Self {
-        Self::new(input, FrameParseErrorKind::Nom(kind))
+impl<'a> nom::error::ParseError<&'a [u8]> for FrameParseError {
+    fn from_error_kind(_: &'a [u8], kind: nom::error::ErrorKind) -> Self {
+        Self::Nom(kind)
     }
 
     fn append(_: &'a [u8], _: nom::error::ErrorKind, other: Self) -> Self {
@@ -37,8 +25,8 @@ impl<'a> nom::error::ParseError<&'a [u8]> for FrameParseError<'a> {
     }
 }
 
-impl<'a> nom::error::FromExternalError<&'a [u8], FrameParseError<'a>> for FrameParseError<'a> {
-    fn from_external_error(_: &'a [u8], _: nom::error::ErrorKind, e: FrameParseError<'a>) -> Self {
+impl<'a> nom::error::FromExternalError<&'a [u8], FrameParseError> for FrameParseError {
+    fn from_external_error(_: &'a [u8], _: nom::error::ErrorKind, e: FrameParseError) -> Self {
         e
     }
 }
@@ -57,14 +45,11 @@ fn tag_frame_end(i: &[u8]) -> IResult<&[u8], &[u8], FrameParseError> {
 
 fn checksummed_buf<'a>(
     n: usize,
-) -> impl FnMut(&'a [u8]) -> IResult<&'a [u8], &'a [u8], FrameParseError<'a>> {
+) -> impl FnMut(&'a [u8]) -> IResult<&'a [u8], &'a [u8], FrameParseError> {
     cut(map_res(take(n), |i: &[u8]| {
         let l = i.len();
         if calculate_checksum(&i[0..l - 1]) != i[l - 1] {
-            Err(FrameParseError::new(
-                i,
-                FrameParseErrorKind::MalformedChecksum,
-            ))
+            Err(FrameParseError::MalformedChecksum)
         } else {
             Ok(&i[0..l - 1])
         }
@@ -74,10 +59,7 @@ fn checksummed_buf<'a>(
 fn length_value(i: &[u8]) -> IResult<&[u8], usize, FrameParseError> {
     cut(map_res(take(2usize), |i: &[u8]| {
         if i[0] != i[1] {
-            Err(FrameParseError::new(
-                i,
-                FrameParseErrorKind::InconsistentLengthValues,
-            ))
+            Err(FrameParseError::InconsistentLengthValues)
         } else {
             Ok(i[0] as usize)
         }
@@ -102,10 +84,7 @@ fn long_frame(i: &[u8]) -> IResult<&[u8], Frame, FrameParseError> {
     let (i, (_, buf, _)) = (tag_long_start, checksummed_buf(length + 1), tag_frame_end).parse(i)?;
 
     if length < 3 {
-        return Err(Err::Failure(FrameParseError::new(
-            i,
-            FrameParseErrorKind::InconsistentLengthValues,
-        )));
+        return Err(Err::Failure(FrameParseError::InconsistentLengthValues));
     }
 
     let frame = if length == 3 {
@@ -126,7 +105,7 @@ fn long_frame(i: &[u8]) -> IResult<&[u8], Frame, FrameParseError> {
     Ok((i, frame))
 }
 
-pub type ParseError<'a> = Err<FrameParseError<'a>>;
+pub type ParseError = Err<FrameParseError>;
 pub fn parse_frame(i: &[u8]) -> IResult<&[u8], Frame, FrameParseError> {
     alt((single, short_frame, long_frame))(i)
 }
@@ -166,17 +145,11 @@ mod tests {
         // faulty frames
         assert!(matches!(
             Frame::from_bytes(b"\x10\x7b\x49\xc5\x16"),
-            Err(Err::Failure(FrameParseError {
-                kind: FrameParseErrorKind::MalformedChecksum,
-                ..
-            }))
+            Err(Err::Failure(FrameParseError::MalformedChecksum))
         ));
         assert!(matches!(
             Frame::from_bytes(b"\x68\x03\x02\x68\x53\xFE\xBD\x0E\x16"),
-            Err(Err::Failure(FrameParseError {
-                kind: FrameParseErrorKind::InconsistentLengthValues,
-                ..
-            }))
+            Err(Err::Failure(FrameParseError::InconsistentLengthValues))
         ));
 
         Ok(())

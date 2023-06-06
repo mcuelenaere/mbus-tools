@@ -24,7 +24,7 @@ pub enum Frame {
 }
 
 impl Frame {
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, parser::ParseError<'_>> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, parser::ParseError> {
         let (_, frame) = parser::parse_frame(bytes)?;
         Ok(frame)
     }
@@ -38,10 +38,10 @@ impl Frame {
     }
 }
 
-pub type ParseError<'a> = parser::ParseError<'a>;
+pub type ParseError = parser::ParseError;
 
 impl<'a> TryFrom<&'a [u8]> for Frame {
-    type Error = ParseError<'a>;
+    type Error = ParseError;
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
         Frame::from_bytes(bytes)
