@@ -5,6 +5,8 @@ use tokio::signal;
 use tokio_serial::SerialPortBuilderExt;
 use tokio_util::codec::Decoder;
 use tokio_util::sync::CancellationToken;
+use tracing::Level;
+use tracing_subscriber::FmtSubscriber;
 
 mod mbus_codec;
 mod multiplexer;
@@ -12,6 +14,9 @@ mod multiplexer;
 #[derive(Parser, Debug)]
 #[command()]
 struct Args {
+    #[arg(long, default_value = "info")]
+    log_level: Level,
+
     #[arg(long, value_name = "TTY", value_hint = clap::ValueHint::FilePath)]
     tty_path_external_master: String,
 
@@ -47,6 +52,12 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     let args = Args::parse();
+
+    tracing::subscriber::set_global_default(
+        FmtSubscriber::builder()
+            .with_max_level(args.log_level)
+            .finish(),
+    )?;
 
     let external_master = open_serial(args.tty_path_external_master, args.serial_baudrate)
         .with_context(|| "Failed to open external master port")?;

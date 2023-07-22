@@ -12,6 +12,8 @@ mbus = { path = "../mbus" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-util", "signal"] }
 tokio-serial = "5"
 tokio-util = { version = "0.7", features = ["codec"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
 
 [dev-dependencies]
 tokio-test = "0.4"
