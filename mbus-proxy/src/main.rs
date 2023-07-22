@@ -83,7 +83,7 @@ async fn main() -> Result<()> {
     heater
         .send(Frame::Short {
             control: 0x40,
-            address: 0xFF,
+            address: 0x0,
         })
         .await?;
     assert_eq!(heater.next().await.expect("a response")?, Frame::Single);

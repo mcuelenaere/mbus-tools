@@ -131,7 +131,7 @@ mod tests {
         let mut external_master = MockBuilder::new()
             .read(Frame::Short {
                 control: SND_NKE,
-                address: 0xff,
+                address: 0x0,
             })
             .write(Frame::Single)
             .build();
@@ -157,7 +157,7 @@ mod tests {
         let mut wmbusmeter = MockBuilder::new()
             .read(Frame::Short {
                 control: SND_NKE,
-                address: 0xff,
+                address: 0x0,
             })
             .write(Frame::Single)
             .build();
