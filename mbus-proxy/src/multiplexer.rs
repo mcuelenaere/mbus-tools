@@ -57,7 +57,7 @@ where
                     external_master.send(Frame::Single).await?;
                 },
                 Frame::Short { control: REQ_UD2, address } => {
-                    if address == 0x47 {
+                    if address == 0x9A {
                         forward_frame(frame, external_master, heater).await?;
                     } else {
                         // ignore, this is not for us
@@ -179,11 +179,11 @@ mod tests {
         let mut external_master = MockBuilder::new()
             .read(Frame::Short {
                 control: REQ_UD2,
-                address: 0x47,
+                address: 0x9A,
             })
             .write(Frame::Long {
                 control: 0x00,
-                address: 0x47,
+                address: 0x9A,
                 data: vec![0xCA, 0xFE, 0xBA, 0xBE],
                 control_information: 0x00,
             })
@@ -191,11 +191,11 @@ mod tests {
         let mut heater = MockBuilder::new()
             .write(Frame::Short {
                 control: REQ_UD2,
-                address: 0x47,
+                address: 0x9A,
             })
             .read(Frame::Long {
                 control: 0x00,
-                address: 0x47,
+                address: 0x9A,
                 data: vec![0xCA, 0xFE, 0xBA, 0xBE],
                 control_information: 0x00,
             })
@@ -220,11 +220,11 @@ mod tests {
         let mut external_master = MockBuilder::new()
             .read(Frame::Short {
                 control: REQ_UD2,
-                address: 0x47,
+                address: 0x9A,
             })
             .write(Frame::Long {
                 control: 0x00,
-                address: 0x47,
+                address: 0x9A,
                 data: vec![0xCA, 0xFE, 0xBA, 0xBE],
                 control_information: 0x00,
             })
@@ -232,21 +232,21 @@ mod tests {
         let mut heater = MockBuilder::new()
             .write(Frame::Short {
                 control: REQ_UD2,
-                address: 0x47,
+                address: 0x9A,
             })
             .read(Frame::Long {
                 control: 0x00,
-                address: 0x47,
+                address: 0x9A,
                 data: vec![0xCA, 0xFE, 0xBA, 0xBE],
                 control_information: 0x00,
             })
             .write(Frame::Short {
                 control: REQ_UD2,
-                address: 0x47,
+                address: 0x9A,
             })
             .read(Frame::Long {
                 control: 0x00,
-                address: 0x47,
+                address: 0x9A,
                 data: vec![0xCA, 0xFE, 0xBA, 0xBE],
                 control_information: 0x01,
             })
@@ -254,11 +254,11 @@ mod tests {
         let mut wmbusmeter = MockBuilder::new()
             .read(Frame::Short {
                 control: REQ_UD2,
-                address: 0x47,
+                address: 0x9A,
             })
             .write(Frame::Long {
                 control: 0x00,
-                address: 0x47,
+                address: 0x9A,
                 data: vec![0xCA, 0xFE, 0xBA, 0xBE],
                 control_information: 0x01,
             })
