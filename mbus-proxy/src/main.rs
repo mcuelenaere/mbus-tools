@@ -79,8 +79,13 @@ async fn main() -> Result<()> {
 
     info!("Starting main loop");
     while !token.is_cancelled() {
-        multiplexer::multiplex_single_op(&mut external_master, &mut heater, &mut wmbusmeters)
-            .await?;
+        multiplexer::multiplex_single_op(
+            token.clone(),
+            &mut external_master,
+            &mut heater,
+            &mut wmbusmeters,
+        )
+        .await?;
     }
 
     Ok(())

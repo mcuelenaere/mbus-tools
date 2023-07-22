@@ -3,6 +3,7 @@ use color_eyre::eyre::{bail, Context, Result};
 use futures_util::stream::StreamExt;
 use futures_util::{Sink, SinkExt, Stream};
 use mbus::Frame;
+use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
 const SND_NKE: u8 = 0x40;
@@ -34,6 +35,7 @@ where
 }
 
 pub async fn multiplex_single_op<S>(
+    token: CancellationToken,
     external_master: &mut S,
     heater: &mut S,
     wmbusmeters: &mut S,
@@ -85,6 +87,11 @@ where
 
             bail!("Received unexpected frame from heater: {:?}", frame);
         }
+
+        _ = token.cancelled() => {
+            debug!("Cancellation token received, shutting down");
+            return Ok(());
+        }
     }
 
     Ok(())
@@ -131,7 +138,13 @@ mod tests {
         let mut heater = MockBuilder::new().build();
         let mut wmbusmeter = MockBuilder::new().build();
 
-        multiplex_single_op(&mut external_master, &mut heater, &mut wmbusmeter).await?;
+        multiplex_single_op(
+            CancellationToken::new(),
+            &mut external_master,
+            &mut heater,
+            &mut wmbusmeter,
+        )
+        .await?;
         assert!(external_master.next().await.is_none());
 
         Ok(())
@@ -149,7 +162,13 @@ mod tests {
             .write(Frame::Single)
             .build();
 
-        multiplex_single_op(&mut external_master, &mut heater, &mut wmbusmeter).await?;
+        multiplex_single_op(
+            CancellationToken::new(),
+            &mut external_master,
+            &mut heater,
+            &mut wmbusmeter,
+        )
+        .await?;
         assert!(wmbusmeter.next().await.is_none());
 
         Ok(())
@@ -183,7 +202,13 @@ mod tests {
             .build();
         let mut wmbusmeter = MockBuilder::new().build();
 
-        multiplex_single_op(&mut external_master, &mut heater, &mut wmbusmeter).await?;
+        multiplex_single_op(
+            CancellationToken::new(),
+            &mut external_master,
+            &mut heater,
+            &mut wmbusmeter,
+        )
+        .await?;
         assert!(heater.next().await.is_none());
         assert!(external_master.next().await.is_none());
 
@@ -239,11 +264,42 @@ mod tests {
             })
             .build();
 
-        multiplex_single_op(&mut external_master, &mut heater, &mut wmbusmeter).await?;
-        multiplex_single_op(&mut external_master, &mut heater, &mut wmbusmeter).await?;
+        multiplex_single_op(
+            CancellationToken::new(),
+            &mut external_master,
+            &mut heater,
+            &mut wmbusmeter,
+        )
+        .await?;
+        multiplex_single_op(
+            CancellationToken::new(),
+            &mut external_master,
+            &mut heater,
+            &mut wmbusmeter,
+        )
+        .await?;
         assert!(heater.next().await.is_none());
         assert!(external_master.next().await.is_none());
         assert!(wmbusmeter.next().await.is_none());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_cancel() -> Result<()> {
+        let mut external_master = MockBuilder::new().build();
+        let mut heater = MockBuilder::new().build();
+        let mut wmbusmeter = MockBuilder::new().build();
+        let token = CancellationToken::new();
+        token.cancel();
+
+        multiplex_single_op(
+            token.clone(),
+            &mut external_master,
+            &mut heater,
+            &mut wmbusmeter,
+        )
+        .await?;
 
         Ok(())
     }
