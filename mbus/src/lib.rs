@@ -48,6 +48,7 @@ impl Frame {
 }
 
 pub type ParseError = parser::ParseError;
+pub type ParseSizeNeeded = parser::ParseSizeNeeded;
 
 impl<'a> TryFrom<&'a [u8]> for Frame {
     type Error = ParseError;

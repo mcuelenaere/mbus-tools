@@ -72,9 +72,9 @@ async fn main() -> Result<()> {
     let wmbusmeters = open_serial(args.tty_path_wmbusmeters, args.serial_baudrate)
         .with_context(|| "Failed to open wmbusmeters port")?;
 
-    let mut external_master = MbusCodec.framed(external_master);
-    let mut heater = MbusCodec.framed(heater);
-    let mut wmbusmeters = MbusCodec.framed(wmbusmeters);
+    let mut external_master = MbusCodec::default().framed(external_master);
+    let mut heater = MbusCodec::default().framed(heater);
+    let mut wmbusmeters = MbusCodec::default().framed(wmbusmeters);
     let token = CancellationToken::new();
 
     spawn_sigint_watcher(token.clone());

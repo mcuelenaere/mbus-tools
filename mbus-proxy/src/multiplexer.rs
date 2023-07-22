@@ -133,7 +133,7 @@ mod tests {
         }
 
         pub fn build(&mut self) -> Framed<tokio_test::io::Mock, MbusCodec> {
-            MbusCodec.framed(self.0.build())
+            MbusCodec::default().framed(self.0.build())
         }
     }
 

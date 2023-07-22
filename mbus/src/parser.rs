@@ -106,6 +106,7 @@ fn long_frame(i: &[u8]) -> IResult<&[u8], Frame, FrameParseError> {
 }
 
 pub type ParseError = Err<FrameParseError>;
+pub type ParseSizeNeeded = nom::Needed;
 pub fn parse_frame(i: &[u8]) -> IResult<&[u8], Frame, FrameParseError> {
     alt((single, short_frame, long_frame))(i)
 }
