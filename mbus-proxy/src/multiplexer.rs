@@ -3,6 +3,7 @@ use color_eyre::eyre::{bail, Context, Result};
 use futures_util::stream::StreamExt;
 use futures_util::{Sink, SinkExt, Stream};
 use mbus::Frame;
+use tracing::debug;
 
 const SND_NKE: u8 = 0x40;
 const REQ_UD2: u8 = 0x7B;
@@ -14,11 +15,17 @@ where
         + Unpin,
 {
     // forward to heater
+    debug!("Forwarding frame {:?} to destination", frame);
     destination.send(frame).await?;
 
     // wait for response
     // TODO: add timeout mechanism
     let resp = destination.next().await.unwrap()?;
+
+    debug!(
+        "Received response {:?} from destination, forwarding it to the origin",
+        resp
+    );
 
     // reply
     origin.send(resp).await?;
@@ -41,6 +48,7 @@ where
 
         Some(result) = external_master.next() => {
             let frame = result.with_context(|| "Failed reading frame from external master")?;
+            debug!("Received frame {:?} from external master", frame);
 
             match frame {
                 Frame::Short { control: SND_NKE, .. } => {
@@ -60,6 +68,7 @@ where
         }
         Some(result) = wmbusmeters.next() => {
             let frame = result.with_context(|| "Failed reading frame from wmbusmeters")?;
+            debug!("Received frame {:?} from wmbusmeters", frame);
 
             match frame {
                 Frame::Short { control: SND_NKE, .. } => {
@@ -72,6 +81,7 @@ where
         }
         Some(result) = heater.next() => {
             let frame = result.with_context(|| "Failed reading frame from heater")?;
+            debug!("Received frame {:?} from heater", frame);
 
             bail!("Received unexpected frame from heater: {:?}", frame);
         }

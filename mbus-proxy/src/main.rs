@@ -5,7 +5,7 @@ use tokio::signal;
 use tokio_serial::SerialPortBuilderExt;
 use tokio_util::codec::Decoder;
 use tokio_util::sync::CancellationToken;
-use tracing::Level;
+use tracing::{debug, info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod mbus_codec;
@@ -31,6 +31,8 @@ struct Args {
 }
 
 fn open_serial(path: String, baudrate: u32) -> Result<tokio_serial::SerialStream> {
+    debug!("Opening serial port {} (baudrate={})", path, baudrate);
+
     let serial = tokio_serial::new(path, baudrate)
         .data_bits(tokio_serial::DataBits::Eight)
         .stop_bits(tokio_serial::StopBits::One)
@@ -41,8 +43,10 @@ fn open_serial(path: String, baudrate: u32) -> Result<tokio_serial::SerialStream
 }
 
 fn spawn_sigint_watcher(token: CancellationToken) {
+    debug!("Spawning SIGINT watcher");
     tokio::spawn(async move {
         signal::ctrl_c().await.expect("failed to listen for SIGINT");
+        info!("SIGINT received, shutting down");
         token.cancel();
     });
 }
@@ -73,6 +77,7 @@ async fn main() -> Result<()> {
 
     spawn_sigint_watcher(token.clone());
 
+    info!("Starting main loop");
     while !token.is_cancelled() {
         multiplexer::multiplex_single_op(&mut external_master, &mut heater, &mut wmbusmeters)
             .await?;
