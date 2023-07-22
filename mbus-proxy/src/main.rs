@@ -1,6 +1,6 @@
 use clap::Parser;
 use color_eyre::eyre::{Context, Result};
-use futures_util::{SinkExt, StreamExt};
+use futures_util::SinkExt;
 use mbus::Frame;
 use mbus_codec::MbusCodec;
 use tokio::signal;
@@ -86,7 +86,6 @@ async fn main() -> Result<()> {
             address: 0x0,
         })
         .await?;
-    assert_eq!(heater.next().await.expect("a response")?, Frame::Single);
 
     info!("Starting main loop");
     while !token.is_cancelled() {
