@@ -57,8 +57,10 @@ where
             debug!("Received frame {:?} from external master", frame);
 
             match frame {
-                Frame::Short { control: SND_NKE, .. } => {
-                    external_master.send(Frame::Single).await?;
+                Frame::Short { control: SND_NKE, address } => {
+                    if address == 0x0 || address == 0x9A {
+                        external_master.send(Frame::Single).await?;
+                    }
                 },
                 Frame::Short { control: REQ_UD2, address } => {
                     if address == 0x9A {
@@ -77,8 +79,10 @@ where
             debug!("Received frame {:?} from wmbusmeters", frame);
 
             match frame {
-                Frame::Short { control: SND_NKE, .. } => {
-                    wmbusmeters.send(Frame::Single).await?;
+                Frame::Short { control: SND_NKE, address } => {
+                    if address == 0x0 || address == 0x9A {
+                        wmbusmeters.send(Frame::Single).await?;
+                    }
                 },
                 _ => {
                     forward_frame(frame, wmbusmeters, heater).await?;
