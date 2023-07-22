@@ -22,7 +22,8 @@ where
 
     // read response or timeout after 50ms
     let resp = tokio::time::timeout(
-        Duration::from_millis(50),
+        // FIXME: do not use hardcoded baudrate of 2400
+        Duration::from_secs_f64(330.0 / 2400.0) + Duration::from_millis(50),
         destination.next().map(|r| r.unwrap()),
     )
     .await??;
