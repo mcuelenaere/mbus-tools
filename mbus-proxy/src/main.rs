@@ -1,5 +1,5 @@
-use anyhow::{Context, Result};
 use clap::Parser;
+use color_eyre::eyre::{Context, Result};
 use mbus_codec::MbusCodec;
 use tokio::signal;
 use tokio_serial::SerialPortBuilderExt;
@@ -44,6 +44,8 @@ fn spawn_sigint_watcher(token: CancellationToken) {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    color_eyre::install()?;
+
     let args = Args::parse();
 
     let external_master = open_serial(args.tty_path_external_master, args.serial_baudrate)

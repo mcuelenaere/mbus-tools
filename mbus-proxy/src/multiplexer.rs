@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use color_eyre::eyre::{bail, Context, Result};
 
 use futures_util::stream::StreamExt;
 use futures_util::{Sink, SinkExt, Stream};

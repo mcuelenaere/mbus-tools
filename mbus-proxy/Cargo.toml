@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1"
 bytes = "1"
 clap = { version = "4", features = ["derive"] }
+color-eyre = "0.6"
 futures-util = "0.3"
 mbus = { path = "../mbus" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-util", "signal"] }
