@@ -1,7 +1,8 @@
 use color_eyre::eyre::{bail, Context, Result};
+use std::time::Duration;
 
 use futures_util::stream::StreamExt;
-use futures_util::{Sink, SinkExt, Stream};
+use futures_util::{FutureExt, Sink, SinkExt, Stream};
 use mbus::Frame;
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
@@ -19,9 +20,12 @@ where
     debug!("Forwarding frame {:?} to destination", frame);
     destination.send(frame).await?;
 
-    // wait for response
-    // TODO: add timeout mechanism
-    let resp = destination.next().await.unwrap()?;
+    // read response or timeout after 50ms
+    let resp = tokio::time::timeout(
+        Duration::from_millis(50),
+        destination.next().map(|r| r.unwrap()),
+    )
+    .await??;
 
     debug!(
         "Received response {:?} from destination, forwarding it to the origin",
