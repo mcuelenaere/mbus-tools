@@ -1,5 +1,7 @@
 use clap::Parser;
 use color_eyre::eyre::{Context, Result};
+use futures_util::{SinkExt, StreamExt};
+use mbus::Frame;
 use mbus_codec::MbusCodec;
 use tokio::signal;
 use tokio_serial::SerialPortBuilderExt;
@@ -76,6 +78,15 @@ async fn main() -> Result<()> {
     let token = CancellationToken::new();
 
     spawn_sigint_watcher(token.clone());
+
+    info!("Initializing all slaves");
+    heater
+        .send(Frame::Short {
+            control: 0x40,
+            address: 0xFF,
+        })
+        .await?;
+    assert_eq!(heater.next().await.expect("a response")?, Frame::Single);
 
     info!("Starting main loop");
     while !token.is_cancelled() {
