@@ -5,7 +5,7 @@ use futures_util::stream::StreamExt;
 use futures_util::{FutureExt, Sink, SinkExt, Stream};
 use mbus::Frame;
 use tokio_util::sync::CancellationToken;
-use tracing::debug;
+use tracing::{debug, warn};
 
 const SND_NKE: u8 = 0x40;
 const REQ_UD2: u8 = 0x7B;
@@ -57,16 +57,16 @@ where
             debug!("Received frame {:?} from external master", frame);
 
             match frame {
-                Frame::Short { control: SND_NKE, address } => {
+                Frame::Short { control, address } | Frame::Long { control, address, .. } | Frame::Control { control, address, .. } => {
                     if address == 0x0 || address == 0x9A {
-                        external_master.send(Frame::Single).await?;
-                    }
-                },
-                Frame::Short { control: REQ_UD2, address } => {
-                    if address == 0x9A {
-                        forward_frame(frame, external_master, heater).await?;
+                        if control == SND_NKE {
+                            external_master.send(Frame::Single).await?;
+                        } else {
+                            forward_frame(frame, external_master, heater).await?;
+                        }
                     } else {
                         // ignore, this is not for us
+                        warn!("Received frame from external master for a slave that we are not familiar with: {:?}", frame)
                     }
                 },
                 _ => {
@@ -79,13 +79,20 @@ where
             debug!("Received frame {:?} from wmbusmeters", frame);
 
             match frame {
-                Frame::Short { control: SND_NKE, address } => {
+                Frame::Short { control, address } | Frame::Long { control, address, .. } | Frame::Control { control, address, .. } => {
                     if address == 0x0 || address == 0x9A {
-                        wmbusmeters.send(Frame::Single).await?;
+                        if control == SND_NKE {
+                            wmbusmeters.send(Frame::Single).await?;
+                        } else {
+                            forward_frame(frame, wmbusmeters, heater).await?;
+                        }
+                    } else {
+                        // ignore, this is not for us
+                        warn!("Received frame from wmbusmeters for a slave that we are not familiar with: {:?}", frame)
                     }
                 },
                 _ => {
-                    forward_frame(frame, wmbusmeters, heater).await?;
+                    bail!("Received unexpected frame from wmbusmeters: {:?}", frame);
                 }
             }
         }
@@ -95,7 +102,6 @@ where
 
             bail!("Received unexpected frame from heater: {:?}", frame);
         }
-
         _ = token.cancelled() => {
             debug!("Cancellation token received, shutting down");
             return Ok(());
