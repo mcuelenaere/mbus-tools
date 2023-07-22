@@ -1,0 +1,17 @@
+[package]
+name = "mbus-proxy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+bytes = "1"
+clap = { version = "4", features = ["derive"] }
+futures-util = "0.3"
+mbus = { path = "../mbus" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-util", "signal"] }
+tokio-serial = "5"
+tokio-util = { version = "0.7", features = ["codec"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
