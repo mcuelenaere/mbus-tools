@@ -59,12 +59,10 @@ where
 
             match frame {
                 Frame::Short { control, address } | Frame::Long { control, address, .. } | Frame::Control { control, address, .. } => {
-                    if address == 0x0 || address == 0x5A {
-                        if control == SND_NKE {
-                            external_master.send(Frame::Single).await?;
-                        } else {
-                            forward_frame(frame, external_master, heater).await?;
-                        }
+                    if (address == 0x0 || address == 0x5A) && control == SND_NKE {
+                        external_master.send(Frame::Single).await?;
+                    } else if address == 0x5A {
+                        forward_frame(frame, external_master, heater).await?;
                     } else {
                         // ignore, this is not for us
                         warn!("Received frame from external master for a slave that we are not familiar with: {:?}", frame)
@@ -81,12 +79,10 @@ where
 
             match frame {
                 Frame::Short { control, address } | Frame::Long { control, address, .. } | Frame::Control { control, address, .. } => {
-                    if address == 0x0 || address == 0x5A {
-                        if control == SND_NKE {
-                            wmbusmeters.send(Frame::Single).await?;
-                        } else {
-                            forward_frame(frame, wmbusmeters, heater).await?;
-                        }
+                    if (address == 0x0 || address == 0x5A) && control == SND_NKE {
+                        wmbusmeters.send(Frame::Single).await?;
+                    } else if address == 0x5A {
+                        forward_frame(frame, wmbusmeters, heater).await?;
                     } else {
                         // ignore, this is not for us
                         warn!("Received frame from wmbusmeters for a slave that we are not familiar with: {:?}", frame)
