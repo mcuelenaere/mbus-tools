@@ -1,13 +1,14 @@
-use color_eyre::eyre::{bail, Context, Result};
+use color_eyre::eyre::{Context, Result};
 use std::time::Duration;
 
 use futures_util::stream::StreamExt;
 use futures_util::{FutureExt, Sink, SinkExt, Stream};
 use mbus::Frame;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, warn};
+use tracing::{debug, error, warn};
 
 const SND_NKE: u8 = 0x40;
+const SND_UD: u8 = 0x73;
 const REQ_UD2: u8 = 0x7B;
 
 async fn forward_frame<S>(frame: Frame, origin: &mut S, destination: &mut S) -> Result<()>
@@ -22,8 +23,7 @@ where
 
     // read response or timeout after 50ms
     let resp = tokio::time::timeout(
-        // FIXME: do not use hardcoded baudrate of 2400
-        Duration::from_secs_f64(330.0 / 2400.0) + Duration::from_millis(50),
+        Duration::from_secs(2),
         destination.next().map(|r| r.unwrap()),
     )
     .await??;
@@ -58,18 +58,18 @@ where
             debug!("Received frame {:?} from external master", frame);
 
             match frame {
-                Frame::Short { control, address } | Frame::Long { control, address, .. } | Frame::Control { control, address, .. } => {
-                    if (address == 0x0 || address == 0x5A) && control == SND_NKE {
-                        external_master.send(Frame::Single).await?;
-                    } else if address == 0x5A {
-                        forward_frame(frame, external_master, heater).await?;
-                    } else {
-                        // ignore, this is not for us
-                        warn!("Received frame from external master for a slave that we are not familiar with: {:?}", frame)
-                    }
+                Frame::Short { control, address } if control == SND_NKE && (address == 0xFF || address == 0x5A) => {
+                    external_master.send(Frame::Single).await?;
+                }
+                Frame::Short { address, .. } | Frame::Long { address, .. } | Frame::Control { address, .. } if address == 0x5A => {
+                    forward_frame(frame, external_master, heater).await?;
+                }
+                Frame::Short { .. } | Frame::Long { .. } | Frame::Control { .. } => {
+                    // ignore, this is not for us
+                    info!("Received frame from external master for a slave that we are not familiar with: {:?}", frame)
                 },
                 _ => {
-                    bail!("Received unexpected frame from external master: {:?}", frame);
+                    error!("Received unexpected frame from external master: {:?}", frame);
                 }
             }
         }
@@ -78,26 +78,27 @@ where
             debug!("Received frame {:?} from wmbusmeters", frame);
 
             match frame {
-                Frame::Short { control, address } | Frame::Long { control, address, .. } | Frame::Control { control, address, .. } => {
-                    if (address == 0x0 || address == 0x5A) && control == SND_NKE {
-                        wmbusmeters.send(Frame::Single).await?;
-                    } else if address == 0x5A {
-                        forward_frame(frame, wmbusmeters, heater).await?;
-                    } else {
-                        // ignore, this is not for us
-                        warn!("Received frame from wmbusmeters for a slave that we are not familiar with: {:?}", frame)
-                    }
+                Frame::Short { control, address } if control == SND_NKE && (address == 0x0 || address == 0xFD) => {
+                    wmbusmeters.send(Frame::Single).await?;
+                }
+                Frame::Long { control, address, data, .. } if control == SND_UD && address == 0xFD && data == b"\x87\x93\x27\x68\xff\xff\xff\xff" => {
+                    wmbusmeters.send(Frame::Single).await?;
+                }
+                Frame::Short { control, address } if address == 0xFD => {
+                    forward_frame(Frame::Short {
+                        control,
+                        address: 0x5A,
+                    }, wmbusmeters, heater).await?;
                 },
                 _ => {
-                    bail!("Received unexpected frame from wmbusmeters: {:?}", frame);
+                    error!("Received unexpected frame from wmbusmeters: {:?}", frame);
                 }
             }
         }
         Some(result) = heater.next() => {
             let frame = result.with_context(|| "Failed reading frame from heater")?;
-            debug!("Received frame {:?} from heater", frame);
 
-            bail!("Received unexpected frame from heater: {:?}", frame);
+            error!("Received unexpected frame from heater: {:?}", frame);
         }
         _ = token.cancelled() => {
             debug!("Cancellation token received, shutting down");
@@ -265,7 +266,7 @@ mod tests {
         let mut wmbusmeter = MockBuilder::new()
             .read(Frame::Short {
                 control: REQ_UD2,
-                address: 0x5A,
+                address: 0xFD,
             })
             .write(Frame::Long {
                 control: 0x00,
