@@ -5,7 +5,7 @@ use futures_util::stream::StreamExt;
 use futures_util::{FutureExt, Sink, SinkExt, Stream};
 use mbus::Frame;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, warn};
+use tracing::{debug, error, info};
 
 const SND_NKE: u8 = 0x40;
 const SND_UD: u8 = 0x73;
