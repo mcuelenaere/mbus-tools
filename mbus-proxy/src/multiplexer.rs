@@ -9,6 +9,7 @@ use tracing::{debug, error, info};
 
 const SND_NKE: u8 = 0x40;
 const SND_UD: u8 = 0x73;
+#[allow(dead_code)]
 const REQ_UD2: u8 = 0x7B;
 
 async fn forward_frame<S>(frame: Frame, origin: &mut S, destination: &mut S) -> Result<()>
