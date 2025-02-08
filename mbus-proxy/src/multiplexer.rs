@@ -143,7 +143,7 @@ mod tests {
         let mut external_master = MockBuilder::new()
             .read(Frame::Short {
                 control: SND_NKE,
-                address: 0x0,
+                address: 0x5A,
             })
             .write(Frame::Single)
             .build();
