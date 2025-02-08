@@ -7,4 +7,4 @@ edition = "2021"
 bytes = "1.10.0"
 mbus = { path = "../mbus" }
 tokio-util = { version = "0.7", features = ["codec"] }
-tracing = "0.1"
+tracing = "0.1.41"
