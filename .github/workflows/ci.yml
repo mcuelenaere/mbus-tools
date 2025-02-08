@@ -72,7 +72,7 @@ jobs:
             ${{ runner.os }}-fuzz-
 
       - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz
+        run: cargo install --force cargo-fuzz
 
       - name: Run fuzzer
         run: |
