@@ -474,6 +474,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "mbus-debug"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "color-eyre",
+ "futures-util",
+ "mbus-codec",
+ "tokio",
+ "tokio-serial",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "mbus-proxy"
 version = "0.1.0"
 dependencies = [

@@ -3,5 +3,6 @@
 members = [
     "mbus",
     "mbus-codec",
+    "mbus-debug",
     "mbus-proxy",
 ]
