@@ -112,7 +112,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mbus_codec::MbusCodec;
+    use mbus_codec::MbusCodec;
     use tokio_util::codec::{Decoder, Framed};
 
     #[derive(Clone, Debug)]

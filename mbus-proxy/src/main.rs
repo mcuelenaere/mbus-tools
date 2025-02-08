@@ -10,7 +10,6 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, info, Level};
 use tracing_subscriber::FmtSubscriber;
 
-mod mbus_codec;
 mod multiplexer;
 
 #[derive(Parser, Debug)]
