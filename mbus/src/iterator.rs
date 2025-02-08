@@ -12,7 +12,7 @@ impl<'a> FrameIterator<'a> {
     }
 }
 
-impl<'a> Iterator for FrameIterator<'a> {
+impl Iterator for FrameIterator<'_> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -74,7 +74,7 @@ impl<'a> Iterator for FrameIterator<'a> {
                             data[self.index - 7]
                         } else if self.index == 6 + data.len() + 1 {
                             calculate_checksum(
-                                (&[*control, *address, *control_information])
+                                ([*control, *address, *control_information])
                                     .iter()
                                     .chain(data.iter()),
                             )

@@ -39,7 +39,7 @@ impl Frame {
     }
 
     pub fn iter_bytes(&self) -> iterator::FrameIterator<'_> {
-        iterator::FrameIterator::new(&self)
+        iterator::FrameIterator::new(self)
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {

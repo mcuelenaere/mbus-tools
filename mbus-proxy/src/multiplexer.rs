@@ -84,7 +84,7 @@ where
                 Frame::Long { control, address, data, .. } if control == SND_UD && address == 0xFD && data == b"\x87\x93\x27\x68\xff\xff\xff\xff" => {
                     wmbusmeters.send(Frame::Single).await?;
                 }
-                Frame::Short { control, address } if address == 0xFD => {
+                Frame::Short { control, address: 0xFD } => {
                     forward_frame(Frame::Short {
                         control,
                         address: 0x5A,
