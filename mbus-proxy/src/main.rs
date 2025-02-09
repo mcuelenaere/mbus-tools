@@ -1,7 +1,7 @@
 use clap::Parser;
 use color_eyre::eyre::{Context, Result};
 use futures_util::SinkExt;
-use mbus::Frame;
+use mbus_protocol::Frame;
 use mbus_codec::MbusCodec;
 use tokio::signal;
 use tokio_serial::SerialPortBuilderExt;

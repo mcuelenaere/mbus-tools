@@ -2,8 +2,8 @@
 resolver = "2"
 
 members = [
-    "mbus",
     "mbus-codec",
     "mbus-debug",
+    "mbus-protocol",
     "mbus-proxy",
 ]

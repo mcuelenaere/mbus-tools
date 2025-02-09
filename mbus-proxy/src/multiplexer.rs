@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use futures_util::stream::StreamExt;
 use futures_util::{FutureExt, Sink, SinkExt, Stream};
-use mbus::Frame;
+use mbus_protocol::Frame;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info};
 

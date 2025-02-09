@@ -397,18 +397,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "mbus"
-version = "0.1.0"
-dependencies = [
- "nom",
-]
-
-[[package]]
 name = "mbus-codec"
 version = "0.1.0"
 dependencies = [
  "bytes",
- "mbus",
+ "mbus-protocol",
  "tokio-util",
  "tracing",
 ]
@@ -429,14 +422,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "mbus-protocol"
+version = "0.1.0"
+dependencies = [
+ "nom",
+]
+
+[[package]]
 name = "mbus-proxy"
 version = "0.1.0"
 dependencies = [
  "clap",
  "color-eyre",
  "futures-util",
- "mbus",
  "mbus-codec",
+ "mbus-protocol",
  "tokio",
  "tokio-serial",
  "tokio-test",

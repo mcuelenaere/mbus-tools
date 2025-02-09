@@ -1,5 +1,5 @@
 [package]
-name = "mbus"
+name = "mbus-protocol"
 version = "0.1.0"
 edition = "2021"
 

@@ -1,5 +1,5 @@
 use bytes::{Buf, BufMut, BytesMut};
-use mbus::{Frame, ParseError, ParseSizeNeeded};
+use mbus_protocol::{Frame, ParseError, ParseSizeNeeded};
 use std::io::{Error, ErrorKind};
 use tokio_util::codec::{Decoder, Encoder};
 use tracing::trace;
