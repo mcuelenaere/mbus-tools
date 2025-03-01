@@ -45,18 +45,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "mbus"
-version = "0.1.0"
-dependencies = [
- "nom",
-]
-
-[[package]]
 name = "mbus-fuzz"
 version = "0.0.0"
 dependencies = [
  "libfuzzer-sys",
- "mbus",
+ "mbus-protocol",
+]
+
+[[package]]
+name = "mbus-protocol"
+version = "0.1.0"
+dependencies = [
+ "nom",
 ]
 
 [[package]]
