@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = { version = "4.5.31", features = ["derive"] }
+clap = { version = "4.5.53", features = ["derive"] }
 color-eyre = "0.6.3"
 futures-util = "0.3"
 mbus-protocol = { path = "../mbus-protocol" }
