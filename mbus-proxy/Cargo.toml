@@ -9,7 +9,7 @@ color-eyre = "0.6.3"
 futures-util = "0.3"
 mbus-protocol = { path = "../mbus-protocol" }
 mbus-codec = { path = "../mbus-codec" }
-tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "io-util", "signal", "time"] }
+tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread", "io-util", "signal", "time"] }
 tokio-serial = "5.4.5"
 tokio-util = { version = "0.7.13", features = ["codec"] }
 tracing = "0.1.41"
